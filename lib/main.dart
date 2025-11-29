@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'screens/new_expense.dart';
 
 void main() async {
   // 1. Garante que o Flutter esteja pronto antes de carregar plugins
@@ -25,14 +26,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.green,
         useMaterial3: true,
       ),
-      home: const Scaffold(
-        body: Center(
-          child: Text(
-            "Firebase Conectado com Sucesso!", 
-            style: TextStyle(fontSize: 20),
-          ),
-        ),
-      ),
+      home: const Expense(),
     );
   }
 }
