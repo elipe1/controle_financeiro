@@ -1,4 +1,5 @@
 // import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:controle_financeiro/category.dart';
 import 'package:flutter/material.dart';
 
@@ -14,6 +15,61 @@ class _ExpenseState extends State<Expense> {
   final TextEditingController value = TextEditingController();
   DateTime? date;
   String? category;
+  Key dropdownKey = UniqueKey();
+
+  void _clearFields() {
+    setState(() {
+      description.clear();
+      value.clear();
+      date = null;
+      category = null;
+      dropdownKey = UniqueKey();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Campos limpos com sucesso!'), backgroundColor: Colors.blue),
+    );
+  }
+
+  Future<void> _saveExpense() async {
+    if (description.text.isEmpty ||
+        value.text.isEmpty ||
+        date == null ||
+        category == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Por favor, preencha todos os campos.')),
+      );
+      return;
+    }
+
+    try {
+      await FirebaseFirestore.instance.collection('expenses').add({
+        'description': description.text,
+        'value': double.parse(value.text.replaceAll(',', '.')),
+        'category': category,
+        'date': Timestamp.fromDate(date!),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gasto registrado com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        _clearFields();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao registrar gasto: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +115,7 @@ class _ExpenseState extends State<Expense> {
               // Category Dropdown
               SizedBox(height: 16),
               DropdownMenu<String>(
+                key: dropdownKey,
                 width: MediaQuery.of(context).size.width - 48,
                 label: const Text('Categoria'),
                 hintText: 'Escolha uma categoria',
@@ -85,7 +142,7 @@ class _ExpenseState extends State<Expense> {
 
                   FilledButton.icon(
                     style: FilledButton.styleFrom(
-                      backgroundColor: Colors.green,
+                      backgroundColor: Colors.grey[800],
                       foregroundColor: Colors.white,
                     ),
                     onPressed: () async {
@@ -127,11 +184,53 @@ class _ExpenseState extends State<Expense> {
                   ),
                 ],
               ),
-              
+
+              // Action Buttons
+              SizedBox(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _clearFields,
+                    icon: Icon(Icons.clear),
+                    label: Text('Limpar'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.blue,
+                      side: BorderSide(color: Colors.blue),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+
+                  FilledButton.icon(
+                    onPressed: _saveExpense,
+                    icon: Icon(Icons.save),
+                    label: Text('Salvar'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    description.dispose();
+    value.dispose();
+    super.dispose();
   }
 }
