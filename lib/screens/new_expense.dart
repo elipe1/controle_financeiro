@@ -58,18 +58,18 @@ class _ExpenseState extends State<Expense> {
 
               // Category Dropdown
               SizedBox(height: 16),
-              DropdownButtonFormField<String>(
+              DropdownMenu<String>(
                 width: MediaQuery.of(context).size.width - 48,
-                initialValue: category,
-                hint: Text('Escolha uma categoria'),
-                decoration: InputDecoration(
-                  labelText: 'Categoria',
-                  border: OutlineInputBorder(),
-                ),
-                items: Categories.all.map((String cat) {
-                  return DropdownMenuItem<String>(value: cat, child: Text(cat));
+                label: const Text('Categoria'),
+                hintText: 'Escolha uma categoria',
+                initialSelection: category,
+                enableSearch: false,
+                enableFilter: false,
+                requestFocusOnTap: false,
+                dropdownMenuEntries: Categories.all.map((String cat) {
+                  return DropdownMenuEntry<String>(value: cat, label: cat);
                 }).toList(),
-                onChanged: (String? newValue) {
+                onSelected: (String? newValue) {
                   setState(() {
                     category = newValue;
                   });
@@ -127,6 +127,7 @@ class _ExpenseState extends State<Expense> {
                   ),
                 ],
               ),
+              
             ],
           ),
         ),
