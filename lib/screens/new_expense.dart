@@ -25,9 +25,6 @@ class _ExpenseState extends State<Expense> {
       category = null;
       dropdownKey = UniqueKey();
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Campos limpos com sucesso!'), backgroundColor: Colors.blue),
-    );
   }
 
   Future<void> _saveExpense() async {
@@ -35,9 +32,15 @@ class _ExpenseState extends State<Expense> {
         value.text.isEmpty ||
         date == null ||
         category == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor, preencha todos os campos.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Por favor, preencha todos os campos.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+
       return;
     }
 
@@ -191,7 +194,17 @@ class _ExpenseState extends State<Expense> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   OutlinedButton.icon(
-                    onPressed: _clearFields,
+                    onPressed: () {
+                      _clearFields();
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Campos limpos com sucesso!'),
+                            backgroundColor: Colors.blue,
+                          ),
+                        );
+                      }
+                    },
                     icon: Icon(Icons.clear),
                     label: Text('Limpar'),
                     style: OutlinedButton.styleFrom(
