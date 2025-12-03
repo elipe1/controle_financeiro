@@ -1,13 +1,13 @@
+import 'package:controle_financeiro/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'firebase_options.dart';
-import 'screens/new_expense.dart';
 
 void main() async {
   // 1. Garante que o Flutter esteja pronto antes de carregar plugins
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // 2. Inicializa o Firebase usando a configuração gerada
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -28,18 +28,18 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
-      localizationsDelegates: [
+      localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
 
-      supportedLocales: [
-        const Locale('pt', 'BR'),
+      supportedLocales: const [
+        Locale('pt', 'BR'),
       ],
 
       locale: const Locale('pt', 'BR'),
-      home: const Expense(),
+      home: const HomeScreen(),
     );
   }
 }
