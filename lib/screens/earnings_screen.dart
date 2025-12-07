@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:controle_financeiro/earning_category.dart';
 import 'package:controle_financeiro/models/earning.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
@@ -16,6 +15,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
   final TextEditingController _amountController = TextEditingController();
   String? _selectedCategory;
   Key _dropdownKey = UniqueKey();
+  String? _editingEarningId;
 
   final Uuid uuid = const Uuid();
 
@@ -23,6 +23,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
     setState(() {
       _amountController.clear();
       _selectedCategory = null;
+      _editingEarningId = null;
       _dropdownKey = UniqueKey();
     });
   }
@@ -50,16 +51,28 @@ class _EarningsScreenState extends State<EarningsScreen> {
     }
 
     try {
-      await FirebaseFirestore.instance.collection('earnings').add({
-        'id': uuid.v4(),
+      final earningData = {
         'amount': amount,
         'category': _selectedCategory,
         'date': Timestamp.now(),
-      });
+      };
+
+      if (_editingEarningId == null) {
+        await FirebaseFirestore.instance.collection('earnings').add({
+          ...earningData,
+          'id': uuid.v4(),
+        });
+      } else {
+        await FirebaseFirestore.instance
+            .collection('earnings')
+            .doc(_editingEarningId)
+            .update(earningData);
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ganho registrado com sucesso!'),
+        SnackBar(
+          content: Text(
+              'Ganho ${_editingEarningId == null ? 'registrado' : 'atualizado'} com sucesso!'),
           backgroundColor: Colors.green,
         ),
       );
@@ -72,6 +85,15 @@ class _EarningsScreenState extends State<EarningsScreen> {
         ),
       );
     }
+  }
+
+  void _startEdit(
+      String id, double currentAmount, String currentCategory) {
+    setState(() {
+      _editingEarningId = id;
+      _amountController.text = currentAmount.toString();
+      _selectedCategory = currentCategory;
+    });
   }
 
   @override
@@ -89,15 +111,6 @@ class _EarningsScreenState extends State<EarningsScreen> {
               style: TextStyle(fontSize: 24),
             ),
             _buildEarningsList(),
-            const SizedBox(height: 32),
-            const Text(
-              'Gráfico de Despesas',
-              style: TextStyle(fontSize: 24),
-            ),
-            SizedBox(
-              height: 300,
-              child: _buildExpensesChart(),
-            ),
           ],
         ),
       ),
@@ -108,9 +121,11 @@ class _EarningsScreenState extends State<EarningsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Registrar Novo Ganho',
-          style: TextStyle(fontSize: 24),
+        Text(
+          _editingEarningId == null
+              ? 'Registrar Novo Ganho'
+              : 'Editando Ganho',
+          style: const TextStyle(fontSize: 24),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -173,15 +188,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
           return const Center(child: Text('Nenhum ganho registrado.'));
         }
 
-        final earnings = snapshot.data!.docs.map((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          return Earning(
-            id: data.containsKey('id') ? data['id'] : '',
-            amount: data['amount'],
-            category: data['category'],
-            date: (data['date'] as Timestamp).toDate(),
-          );
-        }).toList();
+        final earnings = snapshot.data!.docs;
 
         return ListView.builder(
           shrinkWrap: true,
@@ -189,13 +196,32 @@ class _EarningsScreenState extends State<EarningsScreen> {
           itemCount: earnings.length,
           itemBuilder: (context, index) {
             final earning = earnings[index];
+            final data = earning.data() as Map<String, dynamic>;
+            final date = (data['date'] as Timestamp).toDate();
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 8),
               child: ListTile(
                 title: Text(
-                    '${earning.category}: R\$ ${earning.amount.toStringAsFixed(2)}'),
+                    '${data['category']}: R\$ ${data['amount'].toStringAsFixed(2)}'),
                 subtitle:
-                    Text('${earning.date.day}/${earning.date.month}/${earning.date.year}'),
+                    Text('${date.day}/${date.month}/${date.year}'),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () => _startEdit(
+                        earning.id,
+                        data['amount'],
+                        data['category'],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () => _deleteEarning(earning.id),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -204,65 +230,26 @@ class _EarningsScreenState extends State<EarningsScreen> {
     );
   }
 
-  Widget _buildExpensesChart() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('expenses').snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(
-              child: Text('Nenhuma despesa para exibir no gráfico.'));
-        }
-
-        Map<String, double> expenseByCategory = {};
-        for (var doc in snapshot.data!.docs) {
-          final data = doc.data() as Map<String, dynamic>;
-          final category = data['category'] as String;
-          final value = data['value'] as double;
-          expenseByCategory.update(
-              category, (existingValue) => existingValue + value,
-              ifAbsent: () => value);
-        }
-
-        double totalExpense =
-            expenseByCategory.values.fold(0, (sum, item) => sum + item);
-
-        final List<Color> chartColors = [
-          Colors.blue,
-          Colors.red,
-          Colors.yellow,
-          Colors.purple,
-          Colors.orange,
-          Colors.teal,
-          Colors.pink,
-          Colors.amber,
-        ];
-
-        List<PieChartSectionData> sections =
-            expenseByCategory.entries.map((entry) {
-          final percentage = (entry.value / totalExpense) * 100;
-          final colorIndex =
-              expenseByCategory.keys.toList().indexOf(entry.key);
-          return PieChartSectionData(
-            value: percentage,
-            title: '${percentage.toStringAsFixed(1)}%',
-            color: chartColors[colorIndex % chartColors.length],
-            radius: 80,
-            titleStyle: const TextStyle(
-                fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
-          );
-        }).toList();
-
-        return PieChart(
-          PieChartData(
-            sections: sections,
-            sectionsSpace: 2,
-            centerSpaceRadius: 40,
+  Future<void> _deleteEarning(String id) async {
+    try {
+      await FirebaseFirestore.instance.collection('earnings').doc(id).delete();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ganho excluído com sucesso!'),
+            backgroundColor: Colors.green,
           ),
         );
-      },
-    );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao excluir ganho: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
