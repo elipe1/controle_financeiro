@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:controle_financeiro/earning_category.dart';
-import 'package:controle_financeiro/models/earning.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 

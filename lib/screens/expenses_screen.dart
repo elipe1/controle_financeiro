@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:controle_financeiro/category.dart';
+import 'package:controle_financeiro/expense_category.dart';
 import 'package:flutter/material.dart';
 
 class ExpensesScreen extends StatefulWidget {
@@ -142,7 +142,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               enableSearch: false,
               enableFilter: false,
               requestFocusOnTap: false,
-              dropdownMenuEntries: Categories.all.map((String cat) {
+              dropdownMenuEntries: ExpenseCategory.all.map((String cat) {
                 return DropdownMenuEntry<String>(value: cat, label: cat);
               }).toList(),
               onSelected: (String? newValue) {

@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:controle_financeiro/category.dart';
+import 'package:controle_financeiro/expense_category.dart';
 import 'package:flutter/material.dart';
 
 class Expense extends StatefulWidget {
@@ -114,7 +114,7 @@ class _ExpenseState extends State<Expense> {
               enableSearch: false,
               enableFilter: false,
               requestFocusOnTap: false,
-              dropdownMenuEntries: Categories.all.map((String cat) {
+              dropdownMenuEntries: ExpenseCategory.all.map((String cat) {
                 return DropdownMenuEntry<String>(value: cat, label: cat);
               }).toList(),
               onSelected: (String? newValue) {
@@ -180,12 +180,24 @@ class _ExpenseState extends State<Expense> {
                   onPressed: () {
                     _clearFields();
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Campos limpos com sucesso!'),
-                          backgroundColor: Colors.blue,
-                        ),
-                      );
+                      if (date == null &&
+                          category == null &&
+                          description.text.isEmpty &&
+                          value.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Nenhum campo para limpar.'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Campos limpos com sucesso!'),
+                            backgroundColor: Colors.blue,
+                          ),
+                        );
+                      }
                     }
                   },
                   icon: const Icon(Icons.clear),
@@ -216,10 +228,7 @@ class _ExpenseState extends State<Expense> {
               ],
             ),
             const SizedBox(height: 32),
-            const Text(
-              "Histórico de Gastos",
-              style: TextStyle(fontSize: 24),
-            ),
+            const Text("Histórico de Gastos", style: TextStyle(fontSize: 24)),
             _buildExpensesList(),
           ],
         ),

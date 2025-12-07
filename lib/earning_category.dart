@@ -1,13 +1,13 @@
 class EarningCategories {
-  static const String salario = 'Salário';
-  static const String investimento = 'Investimento';
-  static const String bonus = 'Bônus';
-  static const String outros = 'Outros';
+  static String salary = 'Salário';
+  static String investment = 'Investimento';
+  static String bonus = 'Bônus';
+  static String others = 'Outros';
 
-  static const List<String> all = [
-    salario,
-    investimento,
+  static List<String> all = [
+    salary,
+    investment,
     bonus,
-    outros,
+    others,
   ];
 }
