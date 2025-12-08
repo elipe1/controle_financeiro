@@ -1,22 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:controle_financeiro/expense_category.dart';
+import 'package:controle_financeiro/earning_category.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class Expense extends StatefulWidget {
-  Expense({super.key});
+class Earning extends StatefulWidget {
+  Earning({super.key});
 
   @override
-  State<Expense> createState() => _ExpenseState();
+  State<Earning> createState() => _EarningState();
 }
 
-class _ExpenseState extends State<Expense> {
+class _EarningState extends State<Earning> {
   final TextEditingController description = TextEditingController();
   final TextEditingController value = TextEditingController();
   DateTime? date;
   String? category;
   Key dropdownKey = UniqueKey();
-  String? _editingExpenseId;
+  String? _editingEarningId;
 
   void _clearFields() {
     setState(() {
@@ -25,11 +25,11 @@ class _ExpenseState extends State<Expense> {
       date = null;
       category = null;
       dropdownKey = UniqueKey();
-      _editingExpenseId = null;
+      _editingEarningId = null;
     });
   }
 
-  Future<void> _saveExpense() async {
+  Future<void> _saveEarning() async {
     if (description.text.isEmpty ||
         value.text.isEmpty ||
         date == null ||
@@ -46,40 +46,40 @@ class _ExpenseState extends State<Expense> {
     }
 
     try {
-      final expenseData = {
+      final earningData = {
         'description': description.text,
         'value': double.parse(value.text.replaceAll(',', '.')),
         'category': category,
         'date': Timestamp.fromDate(date!),
       };
 
-      if (_editingExpenseId == null) {
-        await FirebaseFirestore.instance.collection('expenses').add({
-          ...expenseData,
+      if (_editingEarningId == null) {
+        await FirebaseFirestore.instance.collection('earnings').add({
+          ...earningData,
           'createdAt': FieldValue.serverTimestamp(),
         });
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Gasto registrado com sucesso!'),
+              content: Text('Ganho registrado com sucesso!'),
               backgroundColor: Colors.green,
             ),
           );
         }
       } else {
         await FirebaseFirestore.instance
-            .collection('expenses')
-            .doc(_editingExpenseId)
+            .collection('earnings')
+            .doc(_editingEarningId)
             .update({
-              ...expenseData,
+              ...earningData,
               'updatedAt': FieldValue.serverTimestamp(),
             });
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Gasto atualizado com sucesso!'),
+              content: Text('Ganho atualizado com sucesso!'),
               backgroundColor: Colors.blue,
             ),
           );
@@ -89,14 +89,14 @@ class _ExpenseState extends State<Expense> {
       if (mounted) {
         _clearFields();
         setState(() {
-          _editingExpenseId = null; // ✅ Reseta o ID de edição
+          _editingEarningId = null; // ✅ Reseta o ID de edição
         });
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao salvar gasto: $e'),
+            content: Text('Erro ao salvar ganho: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -112,7 +112,7 @@ class _ExpenseState extends State<Expense> {
     DateTime currentDate,
   ) {
     setState(() {
-      _editingExpenseId = id;
+      _editingEarningId = id;
       description.text = currentDescription;
       value.text = currentValue.toStringAsFixed(2);
       category = currentCategory;
@@ -129,7 +129,7 @@ class _ExpenseState extends State<Expense> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            _buildAddExpenseForm(),
+            _buildAddEarningForm(),
             Divider(thickness: 2, color: Colors.grey[300]),
             SizedBox(height: 16),
             Text.rich(
@@ -138,29 +138,29 @@ class _ExpenseState extends State<Expense> {
                 children: [
                   TextSpan(text: "Histórico de "),
                   TextSpan(
-                    text: "GASTOS:",
+                    text: "GANHOS:",
                     style: TextStyle(
-                      color: Colors.red[700],
+                      color: Colors.green[700],
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
             ),
-            _buildExpensesList(),
+            _buildEarningsList(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildAddExpenseForm() {
+  Widget _buildAddEarningForm() {
     return Column(
       children: [
         Text(
-          _editingExpenseId == null
-              ? 'Digite os dados do novo gasto:'
-              : 'Edite os dados do gasto:',
+          _editingEarningId == null
+              ? 'Digite os dados do novo ganho:'
+              : 'Edite os dados do ganho:',
           style: TextStyle(fontSize: 24),
         ),
         SizedBox(height: 16),
@@ -204,7 +204,7 @@ class _ExpenseState extends State<Expense> {
           enableSearch: false,
           enableFilter: false,
           requestFocusOnTap: false,
-          dropdownMenuEntries: ExpenseCategory.all.map((String cat) {
+          dropdownMenuEntries: EarningCategories.all.map((String cat) {
             return DropdownMenuEntry<String>(value: cat, label: cat);
           }).toList(),
           onSelected: (String? newValue) {
@@ -213,6 +213,7 @@ class _ExpenseState extends State<Expense> {
             });
           },
         ),
+
         SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -300,7 +301,7 @@ class _ExpenseState extends State<Expense> {
             ),
             SizedBox(width: 16),
             FilledButton.icon(
-              onPressed: _saveExpense,
+              onPressed: _saveEarning,
               icon: Icon(Icons.save),
               label: Text('Salvar'),
               style: FilledButton.styleFrom(
@@ -316,10 +317,10 @@ class _ExpenseState extends State<Expense> {
     );
   }
 
-  Widget _buildExpensesList() {
+  Widget _buildEarningsList() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('expenses')
+          .collection('earnings')
           .orderBy('date', descending: true)
           .limit(10)
           .snapshots(),
@@ -328,18 +329,18 @@ class _ExpenseState extends State<Expense> {
           return Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text('Nenhuma despesa registrada.'));
+          return Center(child: Text('Nenhum ganho registrado.'));
         }
 
-        final expenses = snapshot.data!.docs;
+        final earnings = snapshot.data!.docs;
 
         return ListView.builder(
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
-          itemCount: expenses.length,
+          itemCount: earnings.length,
           itemBuilder: (context, index) {
-            final expense = expenses[index];
-            final data = expense.data() as Map<String, dynamic>;
+            final earning = earnings[index];
+            final data = earning.data() as Map<String, dynamic>;
             final date = (data['date'] as Timestamp).toDate();
             final value = data['value'] is num
                 ? (data['value'] as num).toDouble()
@@ -371,7 +372,7 @@ class _ExpenseState extends State<Expense> {
                             IconButton(
                               icon: Icon(Icons.edit, color: Colors.blue),
                               onPressed: () => _startEdit(
-                                expense.id,
+                                earning.id,
                                 data['description'],
                                 value,
                                 data['category'],
@@ -380,7 +381,7 @@ class _ExpenseState extends State<Expense> {
                             ),
                             IconButton(
                               icon: Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _deleteExpense(expense.id),
+                              onPressed: () => _deleteEarning(earning.id),
                             ),
                           ],
                         ),
@@ -420,12 +421,11 @@ class _ExpenseState extends State<Expense> {
                           ],
                         ),
                         Text(
-                          '- R\$ ${value.toStringAsFixed(2)}', // ✅ Adicionado o -
+                          '+ R\$ ${value.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color:
-                                Colors.red[700], // ✅ Mudado de green para red
+                            color: Colors.green[700],
                           ),
                         ),
                       ],
@@ -440,13 +440,13 @@ class _ExpenseState extends State<Expense> {
     );
   }
 
-  Future<void> _deleteExpense(String id) async {
+  Future<void> _deleteEarning(String id) async {
     try {
-      await FirebaseFirestore.instance.collection('expenses').doc(id).delete();
+      await FirebaseFirestore.instance.collection('earnings').doc(id).delete();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Despesa excluída com sucesso!'),
+            content: Text('Ganho excluído com sucesso!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -455,7 +455,7 @@ class _ExpenseState extends State<Expense> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao excluir despesa: $e'),
+            content: Text('Erro ao excluir ganho: $e'),
             backgroundColor: Colors.red,
           ),
         );

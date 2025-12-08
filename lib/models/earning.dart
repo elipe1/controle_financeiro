@@ -1,13 +1,13 @@
 class Earning {
   Earning({
     required this.id,
-    required this.amount,
+    required this.value,
     required this.category,
     required this.date,
   });
 
   final String id;
-  final double amount;
+  final double value;
   final String category;
   final DateTime date;
 }

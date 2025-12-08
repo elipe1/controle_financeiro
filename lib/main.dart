@@ -1,4 +1,4 @@
-import 'package:controle_financeiro/screens/home_screen.dart';
+import 'package:controle_financeiro/screens/home.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -9,37 +9,30 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // 2. Inicializa o Firebase usando a configuração gerada
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Controle de Gastos',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        useMaterial3: true,
-      ),
+      theme: ThemeData(primarySwatch: Colors.green, useMaterial3: true),
 
-      localizationsDelegates: const [
+      localizationsDelegates: [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
 
-      supportedLocales: const [
-        Locale('pt', 'BR'),
-      ],
+      supportedLocales: [Locale('pt', 'BR')],
 
-      locale: const Locale('pt', 'BR'),
-      home: const HomeScreen(),
+      locale: Locale('pt', 'BR'),
+      home: HomeScreen(),
     );
   }
 }
