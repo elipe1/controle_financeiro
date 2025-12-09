@@ -11,9 +11,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0; // Índice da página atual
+  int _currentIndex = 0;
 
-  // Lista de páginas
   final List<Widget> _pages = [Earning(), Expense()];
 
   @override
@@ -36,14 +35,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      body: _pages[_currentIndex], // Exibe a página atual
+      body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         selectedItemColor: Colors.green,
         unselectedItemColor: Colors.grey,
         onTap: (index) {
           setState(() {
-            _currentIndex = index; // Atualiza a página
+            _currentIndex = index;
           });
         },
         items: [
@@ -79,7 +78,6 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             }
 
-            // ✅ Correção: Pega os dados corretamente e valida
             final totalEarnings = (earningsSnapshot.data?.docs ?? [])
                 .fold<double>(0, (sum, doc) {
                   final data = doc.data() as Map<String, dynamic>;
@@ -107,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: BoxDecoration(
                 color: balance >= 0
                     ? Colors.green[700]
-                    : Colors.red[700], // ✅ Cor forte
+                    : Colors.red[700],
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -115,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white, // ✅ Texto branco para contrastar
+                  color: Colors.white,
                 ),
               ),
             );

@@ -89,7 +89,7 @@ class _ExpenseState extends State<Expense> {
       if (mounted) {
         _clearFields();
         setState(() {
-          _editingExpenseId = null; // ✅ Reseta o ID de edição
+          _editingExpenseId = null;
         });
       }
     } catch (e) {
@@ -420,12 +420,12 @@ class _ExpenseState extends State<Expense> {
                           ],
                         ),
                         Text(
-                          '- R\$ ${value.toStringAsFixed(2)}', // ✅ Adicionado o -
+                          '- R\$ ${value.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color:
-                                Colors.red[700], // ✅ Mudado de green para red
+                                Colors.red[700],
                           ),
                         ),
                       ],

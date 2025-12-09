@@ -89,7 +89,7 @@ class _EarningState extends State<Earning> {
       if (mounted) {
         _clearFields();
         setState(() {
-          _editingEarningId = null; // ✅ Reseta o ID de edição
+          _editingEarningId = null;
         });
       }
     } catch (e) {

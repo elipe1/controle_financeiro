@@ -5,10 +5,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'firebase_options.dart';
 
 void main() async {
-  // 1. Garante que o Flutter esteja pronto antes de carregar plugins
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 2. Inicializa o Firebase usando a configuração gerada
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(MyApp());
