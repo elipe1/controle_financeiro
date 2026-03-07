@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:controle_financeiro/expense_category.dart';
+import 'package:controle_financeiro/services/currency_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -15,8 +16,10 @@ class _ExpenseState extends State<Expense> {
   final TextEditingController value = TextEditingController();
   DateTime? date;
   String? category;
+  String? _selectedCurrency = 'BRL';
   Key dropdownKey = UniqueKey();
   String? _editingExpenseId;
+  final List<String> _currencies = ['BRL', 'USD', 'EUR', 'GBP', 'JPY'];
 
   void _clearFields() {
     setState(() {
@@ -33,7 +36,8 @@ class _ExpenseState extends State<Expense> {
     if (description.text.isEmpty ||
         value.text.isEmpty ||
         date == null ||
-        category == null) {
+        category == null ||
+        _selectedCurrency == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -46,11 +50,24 @@ class _ExpenseState extends State<Expense> {
     }
 
     try {
+      final originalValue = double.parse(value.text.replaceAll(',', '.'));
+      double valueToSave = originalValue;
+
+      if (_selectedCurrency != 'BRL') {
+        valueToSave = await CurrencyService.convertCurrency(
+          _selectedCurrency!,
+          'BRL',
+          originalValue,
+        );
+      }
+
       final expenseData = {
         'description': description.text,
-        'value': double.parse(value.text.replaceAll(',', '.')),
+        'value': valueToSave,
+        'originalValue': originalValue,
         'category': category,
         'date': Timestamp.fromDate(date!),
+        'currency': _selectedCurrency,
       };
 
       if (_editingExpenseId == null) {
@@ -72,9 +89,9 @@ class _ExpenseState extends State<Expense> {
             .collection('expenses')
             .doc(_editingExpenseId)
             .update({
-              ...expenseData,
-              'updatedAt': FieldValue.serverTimestamp(),
-            });
+          ...expenseData,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -107,16 +124,18 @@ class _ExpenseState extends State<Expense> {
   void _startEdit(
     String id,
     String currentDescription,
-    double currentValue,
+    double originalValue,
     String currentCategory,
     DateTime currentDate,
+    String currentCurrency,
   ) {
     setState(() {
       _editingExpenseId = id;
       description.text = currentDescription;
-      value.text = currentValue.toStringAsFixed(2);
+      value.text = originalValue.toStringAsFixed(2);
       category = currentCategory;
       date = currentDate;
+      _selectedCurrency = currentCurrency;
       dropdownKey = UniqueKey();
     });
   }
@@ -186,13 +205,27 @@ class _ExpenseState extends State<Expense> {
             FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
           ],
           decoration: InputDecoration(
-            labelText: 'Valor (R\$)',
+            labelText: 'Valor',
             border: OutlineInputBorder(),
             focusedBorder: OutlineInputBorder(
               borderSide: BorderSide(color: Colors.green),
             ),
             floatingLabelStyle: TextStyle(color: Colors.green),
           ),
+        ),
+        SizedBox(height: 16),
+        DropdownMenu<String>(
+          width: MediaQuery.of(context).size.width - 48,
+          label: Text('Moeda'),
+          initialSelection: _selectedCurrency,
+          dropdownMenuEntries: _currencies.map((String currency) {
+            return DropdownMenuEntry<String>(value: currency, label: currency);
+          }).toList(),
+          onSelected: (String? newValue) {
+            setState(() {
+              _selectedCurrency = newValue;
+            });
+          },
         ),
         SizedBox(height: 16),
         DropdownMenu<String>(
@@ -229,23 +262,6 @@ class _ExpenseState extends State<Expense> {
                   initialDate: DateTime.now(),
                   firstDate: DateTime(2024),
                   lastDate: DateTime(2026),
-                  builder: (context, child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: ColorScheme.light(
-                          primary: Colors.green,
-                          onPrimary: Colors.white,
-                          onSurface: Colors.black,
-                        ),
-                        textButtonTheme: TextButtonThemeData(
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.green,
-                          ),
-                        ),
-                      ),
-                      child: child!,
-                    );
-                  },
                 );
                 if (selectedDate != null) {
                   setState(() {
@@ -341,9 +357,10 @@ class _ExpenseState extends State<Expense> {
             final expense = expenses[index];
             final data = expense.data() as Map<String, dynamic>;
             final date = (data['date'] as Timestamp).toDate();
-            final value = data['value'] is num
-                ? (data['value'] as num).toDouble()
-                : double.tryParse(data['value'].toString()) ?? 0.0;
+            final originalValue = data.containsKey('originalValue')
+                ? (data['originalValue'] as num).toDouble()
+                : (data['value'] as num).toDouble();
+            final currency = data['currency'] ?? 'BRL';
 
             return Card(
               margin: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -373,9 +390,10 @@ class _ExpenseState extends State<Expense> {
                               onPressed: () => _startEdit(
                                 expense.id,
                                 data['description'],
-                                value,
+                                originalValue,
                                 data['category'],
                                 date,
+                                currency,
                               ),
                             ),
                             IconButton(
@@ -420,7 +438,7 @@ class _ExpenseState extends State<Expense> {
                           ],
                         ),
                         Text(
-                          '- R\$ ${value.toStringAsFixed(2)}',
+                          '- $currency ${originalValue.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
