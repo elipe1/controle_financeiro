@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:controle_financeiro/expense_category.dart';
+import 'package:controle_financeiro/currency.dart';
 import 'package:controle_financeiro/services/currency_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,10 +17,10 @@ class _ExpenseState extends State<Expense> {
   final TextEditingController value = TextEditingController();
   DateTime? date;
   String? category;
-  String? _selectedCurrency = 'BRL';
-  Key dropdownKey = UniqueKey();
+  String? currency;
+  Key categorydropdownKey = UniqueKey();
+  Key currencyDropdownKey = UniqueKey();
   String? _editingExpenseId;
-  final List<String> _currencies = ['BRL', 'USD', 'EUR', 'GBP', 'JPY'];
 
   void _clearFields() {
     setState(() {
@@ -27,7 +28,9 @@ class _ExpenseState extends State<Expense> {
       value.clear();
       date = null;
       category = null;
-      dropdownKey = UniqueKey();
+      currency = null;
+      categorydropdownKey = UniqueKey();
+      currencyDropdownKey = UniqueKey();
       _editingExpenseId = null;
     });
   }
@@ -37,7 +40,7 @@ class _ExpenseState extends State<Expense> {
         value.text.isEmpty ||
         date == null ||
         category == null ||
-        _selectedCurrency == null) {
+        currency == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -53,9 +56,9 @@ class _ExpenseState extends State<Expense> {
       final originalValue = double.parse(value.text.replaceAll(',', '.'));
       double valueToSave = originalValue;
 
-      if (_selectedCurrency != 'BRL') {
+      if (currency != 'BRL') {
         valueToSave = await CurrencyService.convertCurrency(
-          _selectedCurrency!,
+          currency!,
           'BRL',
           originalValue,
         );
@@ -67,7 +70,7 @@ class _ExpenseState extends State<Expense> {
         'originalValue': originalValue,
         'category': category,
         'date': Timestamp.fromDate(date!),
-        'currency': _selectedCurrency,
+        'currency': currency,
       };
 
       if (_editingExpenseId == null) {
@@ -135,8 +138,9 @@ class _ExpenseState extends State<Expense> {
       value.text = originalValue.toStringAsFixed(2);
       category = currentCategory;
       date = currentDate;
-      _selectedCurrency = currentCurrency;
-      dropdownKey = UniqueKey();
+      currency = currentCurrency;
+      categorydropdownKey = UniqueKey();
+      currencyDropdownKey = UniqueKey();
     });
   }
 
@@ -215,21 +219,26 @@ class _ExpenseState extends State<Expense> {
         ),
         SizedBox(height: 16),
         DropdownMenu<String>(
+          key: currencyDropdownKey,
           width: MediaQuery.of(context).size.width - 48,
           label: Text('Moeda'),
-          initialSelection: _selectedCurrency,
-          dropdownMenuEntries: _currencies.map((String currency) {
-            return DropdownMenuEntry<String>(value: currency, label: currency);
+          hintText: 'Escolha uma moeda',
+          initialSelection: currency,
+          enableSearch: false,
+          enableFilter: false,
+          requestFocusOnTap: false,
+          dropdownMenuEntries: Currency.all.map((String c) {
+            return DropdownMenuEntry<String>(value: c, label: c);
           }).toList(),
           onSelected: (String? newValue) {
             setState(() {
-              _selectedCurrency = newValue;
+              currency = newValue;
             });
           },
         ),
         SizedBox(height: 16),
         DropdownMenu<String>(
-          key: dropdownKey,
+          key: categorydropdownKey,
           width: MediaQuery.of(context).size.width - 48,
           label: Text('Categoria'),
           hintText: 'Escolha uma categoria',

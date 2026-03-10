@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:controle_financeiro/screens/new_earning.dart';
 import 'package:controle_financeiro/screens/new_expense.dart';
+import 'package:controle_financeiro/currency.dart';
 import 'package:controle_financeiro/services/currency_service.dart';
 import 'package:flutter/material.dart';
 import 'dart:developer';
