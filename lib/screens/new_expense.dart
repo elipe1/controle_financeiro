@@ -92,9 +92,9 @@ class _ExpenseState extends State<Expense> {
             .collection('expenses')
             .doc(_editingExpenseId)
             .update({
-          ...expenseData,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+              ...expenseData,
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -257,33 +257,65 @@ class _ExpenseState extends State<Expense> {
         ),
         SizedBox(height: 16),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("Data do gasto:", style: TextStyle(fontSize: 16)),
-            FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.grey[800],
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () async {
-                final selectedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(2024),
-                  lastDate: DateTime(2026),
-                );
-                if (selectedDate != null) {
-                  setState(() {
-                    date = selectedDate;
+            Expanded(
+              child: TextField(
+                enabled: !(date != null &&
+                    date!.year == DateTime.now().year &&
+                    date!.month == DateTime.now().month &&
+                    date!.day == DateTime.now().day),
+                controller: TextEditingController(
+                  text: date == null
+                      ? ''
+                      : '${date!.day.toString().padLeft(2, '0')}/${date!.month.toString().padLeft(2, '0')}/${date!.year}',
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Data (dd/mm/yyyy)',
+                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.green),
+                  ),
+                  floatingLabelStyle: TextStyle(color: Colors.green),
+                ),
+                inputFormatters: [
+                  _DateInputFormatter(),
+                ],
+                onChanged: (value) {
+                  if (value.length == 10) {
+                    try {
+                      final parts = value.split('/');
+                      final parsedDate = DateTime(
+                        int.parse(parts[2]),
+                        int.parse(parts[1]),
+                        int.parse(parts[0]),
+                      );
+                      if (parsedDate.isBefore(
+                        DateTime.now().add(Duration(days: 1)),
+                      )) {
+                        setState(() {
+                          date = parsedDate;
                   });
                 }
-              },
-              icon: Icon(Icons.calendar_today),
-              label: Text(
-                date == null
-                    ? 'Selecionar Data'
-                    : '${date!.day}/${date!.month}/${date!.year}',
+              } catch (e) {}
+            }
+          },
               ),
+            ),
+            SizedBox(width: 25),
+            Text("Hoje?", style: TextStyle(fontSize: 14)),
+            Checkbox(
+              value: date != null &&
+                  date!.year == DateTime.now().year &&
+                  date!.month == DateTime.now().month &&
+                  date!.day == DateTime.now().day,
+              onChanged: (value) {
+                final now = DateTime.now();
+                setState(() {
+                  date = value == true
+                      ? DateTime(now.year, now.month, now.day)
+                      : null;
+                });
+              },
             ),
           ],
         ),
@@ -451,8 +483,7 @@ class _ExpenseState extends State<Expense> {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color:
-                                Colors.red[700],
+                            color: Colors.red[700],
                           ),
                         ),
                       ],
@@ -495,5 +526,29 @@ class _ExpenseState extends State<Expense> {
     description.dispose();
     value.dispose();
     super.dispose();
+  }
+}
+
+class _DateInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text.replaceAll('/', '');
+    if (text.length > 8) return oldValue;
+    if (!RegExp(r'^\d*$').hasMatch(text)) return oldValue;
+
+    final buffer = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      if (i == 2 || i == 4) buffer.write('/');
+      buffer.write(text[i]);
+    }
+
+    final formatted = buffer.toString();
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
   }
 }
