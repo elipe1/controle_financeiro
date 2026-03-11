@@ -66,10 +66,11 @@ class _ExpenseState extends State<Expense> {
     try {
       final originalValue = double.parse(value.text.replaceAll(',', '.'));
       double valueToSave = originalValue;
+      final currencyCode = currency!.split(' ').first;
 
-      if (currency != 'BRL') {
+      if (currencyCode != 'BRL') {
         valueToSave = await CurrencyService.convertCurrency(
-          currency!,
+          currencyCode,
           'BRL',
           originalValue,
         );
@@ -358,6 +359,7 @@ class _ExpenseState extends State<Expense> {
             SizedBox(width: 25),
             Text("Hoje?", style: TextStyle(fontSize: 14)),
             Checkbox(
+              activeColor: Colors.green,
               value:
                   date != null &&
                   date!.year == DateTime.now().year &&
@@ -530,7 +532,7 @@ class _ExpenseState extends State<Expense> {
                           ],
                         ),
                         Text(
-                          '- $currency ${originalValue.toStringAsFixed(2)}',
+                          '- ${currency.split(' ').first} ${originalValue.toStringAsFixed(2).replaceAll('.', ',')}',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,

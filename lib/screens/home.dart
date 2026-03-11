@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:controle_financeiro/screens/dashboard.dart';
 import 'package:controle_financeiro/screens/new_earning.dart';
 import 'package:controle_financeiro/screens/new_expense.dart';
 import 'package:controle_financeiro/services/currency_service.dart';
@@ -16,7 +17,17 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   String _displayCurrency = 'R\$';
 
-  final List<Widget> _pages = [Earning(), Expense()];
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      Dashboard(displayCurrency: _displayCurrency, symbolToCode: _symbolToCode),
+      Earning(),
+      Expense(),
+    ];
+  }
   final List<String> _currencies = ['R\$', 'US\$', '€', '£', '¥'];
 
   final Map<String, String> _currencyNames = {
@@ -25,6 +36,14 @@ class _HomeScreenState extends State<HomeScreen> {
     '€': '€ - Euro',
     '£': '£ - Libra',
     '¥': '¥ - Iene',
+  };
+
+  final Map<String, String> _symbolToCode = {
+    'R\$': 'BRL',
+    'US\$': 'USD',
+    '€': 'EUR',
+    '£': 'GBP',
+    '¥': 'JPY',
   };
 
   @override
@@ -65,6 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         },
         items: [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Ganhos'),
           BottomNavigationBarItem(
             icon: Icon(Icons.attach_money),
@@ -89,6 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
         if (newValue != null) {
           setState(() {
             _displayCurrency = newValue;
+            _pages[0] = Dashboard(displayCurrency: _displayCurrency, symbolToCode: _symbolToCode);
           });
         }
       },
@@ -179,11 +200,11 @@ class _HomeScreenState extends State<HomeScreen> {
             final balance = totalEarnings - totalExpenses;
 
             return FutureBuilder<double>(
-              future: _displayCurrency == 'BRL'
+              future: _displayCurrency == 'R\$'
                   ? Future.value(balance)
                   : CurrencyService.convertCurrency(
                       'BRL',
-                      _displayCurrency,
+                      _symbolToCode[_displayCurrency] ?? 'BRL',
                       balance,
                     ),
               builder: (context, snapshot) {

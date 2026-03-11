@@ -66,10 +66,11 @@ class _EarningState extends State<Earning> {
     try {
       final originalValue = double.parse(value.text.replaceAll(',', '.'));
       double valueToSave = originalValue;
+      final currencyCode = currency!.split(' ').first;
 
-      if (currency != 'BRL') {
+      if (currencyCode != 'BRL') {
         valueToSave = await CurrencyService.convertCurrency(
-          currency!,
+          currencyCode,
           'BRL',
           originalValue,
         );
@@ -298,6 +299,30 @@ class _EarningState extends State<Earning> {
                       final month = int.parse(parts[1]);
                       final year = int.parse(parts[2]);
 
+                      if (day < 1 || day > 31) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Dia inválido. Use um valor entre 01 e 31.',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (year < 2000) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Ano inválido. Use um valor a partir de 2000.',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
                       if (month < 1 || month > 12) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -309,6 +334,7 @@ class _EarningState extends State<Earning> {
                         );
                         return;
                       }
+
                       if (day < 1 || day > DateTime(year, month + 1, 0).day) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -318,6 +344,7 @@ class _EarningState extends State<Earning> {
                         );
                         return;
                       }
+
                       if (year > DateTime.now().year) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -358,6 +385,7 @@ class _EarningState extends State<Earning> {
             SizedBox(width: 25),
             Text("Hoje?", style: TextStyle(fontSize: 14)),
             Checkbox(
+              activeColor: Colors.green,
               value:
                   date != null &&
                   date!.year == DateTime.now().year &&
@@ -530,7 +558,7 @@ class _EarningState extends State<Earning> {
                           ],
                         ),
                         Text(
-                          '+ $currency ${originalValue.toStringAsFixed(2)}',
+                          '+ ${currency.split(' ').first} ${originalValue.toStringAsFixed(2).replaceAll('.', ',')}',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
