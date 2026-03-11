@@ -21,6 +21,17 @@ class _ExpenseState extends State<Expense> {
   Key categorydropdownKey = UniqueKey();
   Key currencyDropdownKey = UniqueKey();
   String? _editingExpenseId;
+  late final Stream<QuerySnapshot> _expensesStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _expensesStream = FirebaseFirestore.instance
+        .collection('expenses')
+        .orderBy('date', descending: true)
+        .limit(10)
+        .snapshots();
+  }
 
   void _clearFields() {
     setState(() {
@@ -260,10 +271,11 @@ class _ExpenseState extends State<Expense> {
           children: [
             Expanded(
               child: TextField(
-                enabled: !(date != null &&
-                    date!.year == DateTime.now().year &&
-                    date!.month == DateTime.now().month &&
-                    date!.day == DateTime.now().day),
+                enabled:
+                    !(date != null &&
+                        date!.year == DateTime.now().year &&
+                        date!.month == DateTime.now().month &&
+                        date!.day == DateTime.now().day),
                 controller: TextEditingController(
                   text: date == null
                       ? ''
@@ -277,34 +289,77 @@ class _ExpenseState extends State<Expense> {
                   ),
                   floatingLabelStyle: TextStyle(color: Colors.green),
                 ),
-                inputFormatters: [
-                  _DateInputFormatter(),
-                ],
+                inputFormatters: [_DateInputFormatter()],
                 onChanged: (value) {
                   if (value.length == 10) {
                     try {
                       final parts = value.split('/');
-                      final parsedDate = DateTime(
-                        int.parse(parts[2]),
-                        int.parse(parts[1]),
-                        int.parse(parts[0]),
+                      final day = int.parse(parts[0]);
+                      final month = int.parse(parts[1]);
+                      final year = int.parse(parts[2]);
+
+                      if (month < 1 || month > 12) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Mês inválido. Use um valor entre 01 e 12.',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                      if (day < 1 || day > DateTime(year, month + 1, 0).day) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Dia inválido para o mês informado.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                      if (year > DateTime.now().year) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'O ano não pode ser maior que ${DateTime.now().year}.',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      final parsedDate = DateTime(year, month, day);
+                      if (parsedDate.isAfter(DateTime.now())) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('A data não pode ser futura.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                      setState(() {
+                        date = parsedDate;
+                      });
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Data inválida.'),
+                          backgroundColor: Colors.red,
+                        ),
                       );
-                      if (parsedDate.isBefore(
-                        DateTime.now().add(Duration(days: 1)),
-                      )) {
-                        setState(() {
-                          date = parsedDate;
-                  });
-                }
-              } catch (e) {}
-            }
-          },
+                    }
+                  }
+                },
               ),
             ),
             SizedBox(width: 25),
             Text("Hoje?", style: TextStyle(fontSize: 14)),
             Checkbox(
-              value: date != null &&
+              value:
+                  date != null &&
                   date!.year == DateTime.now().year &&
                   date!.month == DateTime.now().month &&
                   date!.day == DateTime.now().day,
@@ -375,11 +430,7 @@ class _ExpenseState extends State<Expense> {
 
   Widget _buildExpensesList() {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('expenses')
-          .orderBy('date', descending: true)
-          .limit(10)
-          .snapshots(),
+      stream: _expensesStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());

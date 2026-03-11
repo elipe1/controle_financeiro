@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:controle_financeiro/screens/new_earning.dart';
 import 'package:controle_financeiro/screens/new_expense.dart';
-import 'package:controle_financeiro/currency.dart';
 import 'package:controle_financeiro/services/currency_service.dart';
 import 'package:flutter/material.dart';
 import 'dart:developer';
@@ -15,10 +14,18 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
-  String _displayCurrency = 'BRL';
+  String _displayCurrency = 'R\$';
 
   final List<Widget> _pages = [Earning(), Expense()];
-  final List<String> _currencies = ['BRL', 'USD', 'EUR', 'GBP', 'JPY'];
+  final List<String> _currencies = ['R\$', 'US\$', '€', '£', '¥'];
+
+  final Map<String, String> _currencyNames = {
+    'R\$': 'R\$ - Reais',
+    'US\$': 'US\$ - Dólar',
+    '€': '€ - Euro',
+    '£': '£ - Libra',
+    '¥': '¥ - Iene',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 _buildBalanceInAppBar(),
+                SizedBox(width: 16),
                 _buildCurrencyDropdown(),
               ],
             ),
@@ -71,9 +79,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return DropdownButton<String>(
       value: _displayCurrency,
       dropdownColor: Colors.green,
-      style: TextStyle(color: Colors.white),
+      style: TextStyle(
+        color: Colors.white,
+        ),
       icon: Icon(Icons.arrow_drop_down, color: Colors.white),
       underline: Container(),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       onChanged: (String? newValue) {
         if (newValue != null) {
           setState(() {
@@ -81,10 +92,18 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         }
       },
+      selectedItemBuilder: (BuildContext context) {
+        return _currencies.map<Widget>((String value) {
+          return Align(
+            alignment: Alignment.centerLeft,
+            child: Text(value, style: TextStyle(color: Colors.white)),
+          );
+        }).toList();
+      },
       items: _currencies.map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(
           value: value,
-          child: Text(value),
+          child: Text(_currencyNames[value] ?? value),
         );
       }).toList(),
     );
@@ -106,13 +125,19 @@ class _HomeScreenState extends State<HomeScreen> {
       stream: FirebaseFirestore.instance.collection('earnings').snapshots(),
       builder: (context, earningsSnapshot) {
         if (earningsSnapshot.hasError) {
-          log('Error fetching earnings: ${earningsSnapshot.error}', stackTrace: earningsSnapshot.stackTrace);
+          log(
+            'Error fetching earnings: ${earningsSnapshot.error}',
+            stackTrace: earningsSnapshot.stackTrace,
+          );
         }
         return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance.collection('expenses').snapshots(),
           builder: (context, expensesSnapshot) {
             if (expensesSnapshot.hasError) {
-              log('Error fetching expenses: ${expensesSnapshot.error}', stackTrace: expensesSnapshot.stackTrace);
+              log(
+                'Error fetching expenses: ${expensesSnapshot.error}',
+                stackTrace: expensesSnapshot.stackTrace,
+              );
             }
             if (earningsSnapshot.connectionState == ConnectionState.waiting ||
                 expensesSnapshot.connectionState == ConnectionState.waiting) {
@@ -156,7 +181,11 @@ class _HomeScreenState extends State<HomeScreen> {
             return FutureBuilder<double>(
               future: _displayCurrency == 'BRL'
                   ? Future.value(balance)
-                  : CurrencyService.convertCurrency('BRL', _displayCurrency, balance),
+                  : CurrencyService.convertCurrency(
+                      'BRL',
+                      _displayCurrency,
+                      balance,
+                    ),
               builder: (context, snapshot) {
                 final displayBalance = snapshot.data ?? balance;
 

@@ -268,33 +268,109 @@ class _EarningState extends State<Earning> {
         ),
         SizedBox(height: 16),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("Data do ganho:", style: TextStyle(fontSize: 16)),
-            FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.grey[800],
-                foregroundColor: Colors.white,
+            Expanded(
+              child: TextField(
+                enabled:
+                    !(date != null &&
+                        date!.year == DateTime.now().year &&
+                        date!.month == DateTime.now().month &&
+                        date!.day == DateTime.now().day),
+                controller: TextEditingController(
+                  text: date == null
+                      ? ''
+                      : '${date!.day.toString().padLeft(2, '0')}/${date!.month.toString().padLeft(2, '0')}/${date!.year}',
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Data (dd/mm/yyyy)',
+                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.green),
+                  ),
+                  floatingLabelStyle: TextStyle(color: Colors.green),
+                ),
+                inputFormatters: [_DateInputFormatter()],
+                onChanged: (value) {
+                  if (value.length == 10) {
+                    try {
+                      final parts = value.split('/');
+                      final day = int.parse(parts[0]);
+                      final month = int.parse(parts[1]);
+                      final year = int.parse(parts[2]);
+
+                      if (month < 1 || month > 12) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Mês inválido. Use um valor entre 01 e 12.',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                      if (day < 1 || day > DateTime(year, month + 1, 0).day) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Dia inválido para o mês informado.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                      if (year > DateTime.now().year) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'O ano não pode ser maior que ${DateTime.now().year}.',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      final parsedDate = DateTime(year, month, day);
+                      if (parsedDate.isAfter(DateTime.now())) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('A data não pode ser futura.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                      setState(() {
+                        date = parsedDate;
+                      });
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Data inválida.'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                },
               ),
-              onPressed: () async {
-                final selectedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(2024),
-                  lastDate: DateTime(2026),
-                );
-                if (selectedDate != null) {
-                  setState(() {
-                    date = selectedDate;
-                  });
-                }
+            ),
+            SizedBox(width: 25),
+            Text("Hoje?", style: TextStyle(fontSize: 14)),
+            Checkbox(
+              value:
+                  date != null &&
+                  date!.year == DateTime.now().year &&
+                  date!.month == DateTime.now().month &&
+                  date!.day == DateTime.now().day,
+              onChanged: (value) {
+                final now = DateTime.now();
+                setState(() {
+                  date = value == true
+                      ? DateTime(now.year, now.month, now.day)
+                      : null;
+                });
               },
-              icon: Icon(Icons.calendar_today),
-              label: Text(
-                date == null
-                    ? 'Selecionar Data'
-                    : '${date!.day}/${date!.month}/${date!.year}',
-              ),
             ),
           ],
         ),
@@ -501,5 +577,29 @@ class _EarningState extends State<Earning> {
     description.dispose();
     value.dispose();
     super.dispose();
+  }
+}
+
+class _DateInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text.replaceAll('/', '');
+    if (text.length > 8) return oldValue;
+    if (!RegExp(r'^\d*$').hasMatch(text)) return oldValue;
+
+    final buffer = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      if (i == 2 || i == 4) buffer.write('/');
+      buffer.write(text[i]);
+    }
+
+    final formatted = buffer.toString();
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
   }
 }

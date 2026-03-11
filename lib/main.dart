@@ -31,6 +31,7 @@ class MyApp extends StatelessWidget {
 
       locale: Locale('pt', 'BR'),
       home: HomeScreen(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
