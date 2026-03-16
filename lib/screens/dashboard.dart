@@ -18,8 +18,7 @@ class Dashboard extends StatelessWidget {
       stream: FirebaseFirestore.instance.collection('earnings').snapshots(),
       builder: (context, earningsSnapshot) {
         return StreamBuilder<QuerySnapshot>(
-          stream:
-              FirebaseFirestore.instance.collection('expenses').snapshots(),
+          stream: FirebaseFirestore.instance.collection('expenses').snapshots(),
           builder: (context, expensesSnapshot) {
             if (earningsSnapshot.connectionState == ConnectionState.waiting ||
                 expensesSnapshot.connectionState == ConnectionState.waiting) {
@@ -52,8 +51,6 @@ class Dashboard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildBalanceCard(balance),
-                  SizedBox(height: 16),
                   _buildSummaryCards(totalEarnings, totalExpenses),
                   SizedBox(height: 24),
                   _buildCurrencyQuotes(context),
@@ -68,57 +65,15 @@ class Dashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildBalanceCard(double balance) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: balance >= 0 ? Colors.green[50] : Colors.red[50],
-      child: Padding(
-        padding: EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              'Saldo Atual',
-              style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-            ),
-            SizedBox(height: 8),
-            FutureBuilder<double>(
-              future: displayCurrency == 'R\$'
-                  ? Future.value(balance)
-                  : CurrencyService.convertCurrency(
-                      'BRL',
-                      symbolToCode[displayCurrency] ?? 'BRL',
-                      balance,
-                    ),
-              builder: (context, snapshot) {
-                final displayBalance = snapshot.data ?? balance;
-                return Text(
-                  '$displayCurrency ${displayBalance.toStringAsFixed(2).replaceAll('.', ',')}',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: displayBalance >= 0
-                        ? Colors.green[700]
-                        : Colors.red[700],
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildSummaryCards(double totalEarnings, double totalExpenses) {
     return Row(
       children: [
         Expanded(
           child: Card(
             elevation: 2,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
               padding: EdgeInsets.all(16),
               child: Column(
@@ -147,8 +102,9 @@ class Dashboard extends StatelessWidget {
         Expanded(
           child: Card(
             elevation: 2,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
               padding: EdgeInsets.all(16),
               child: Column(
@@ -199,17 +155,20 @@ class Dashboard extends StatelessWidget {
             return Card(
               elevation: 2,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Padding(
                 padding: EdgeInsets.all(8),
                 child: Column(
                   children: quotes.entries.map((entry) {
                     return ListTile(
-                      leading: Icon(Icons.monetization_on,
-                          color: Colors.green[700]),
+                      leading: Icon(
+                        Icons.monetization_on,
+                        color: Colors.green[700],
+                      ),
                       title: Text(entry.key),
                       trailing: Text(
-                        'R\$ ${entry.value.toStringAsFixed(2).replaceAll('.', ',')}',
+                        'R\$ ${entry.value.toStringAsFixed(4).replaceAll('.', ',')}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -227,18 +186,12 @@ class Dashboard extends StatelessWidget {
   }
 
   Future<Map<String, double>> _fetchQuotes() async {
-    final currencies = {
-      'USD': 1.0,
-      'EUR': 1.0,
-      'GBP': 1.0,
-      'JPY': 1.0,
-    };
+    final currencies = {'USD': 1.0, 'EUR': 1.0, 'GBP': 1.0, 'JPY': 1.0};
 
     final result = <String, double>{};
     for (final code in currencies.keys) {
       try {
-        final value =
-            await CurrencyService.convertCurrency(code, 'BRL', 1.0);
+        final value = await CurrencyService.convertCurrency(code, 'BRL', 1.0);
         result[code] = value;
       } catch (e) {
         // skip if conversion fails
@@ -259,10 +212,9 @@ class Dashboard extends StatelessWidget {
         'type': 'earning',
         'description': data['description'] ?? '',
         'value': (data['value'] as num?)?.toDouble() ?? 0,
-        'originalValue':
-            data.containsKey('originalValue')
-                ? (data['originalValue'] as num).toDouble()
-                : (data['value'] as num?)?.toDouble() ?? 0,
+        'originalValue': data.containsKey('originalValue')
+            ? (data['originalValue'] as num).toDouble()
+            : (data['value'] as num?)?.toDouble() ?? 0,
         'currency': data['currency'] ?? 'BRL',
         'category': data['category'] ?? '',
         'date': data['date'] as Timestamp?,
@@ -275,10 +227,9 @@ class Dashboard extends StatelessWidget {
         'type': 'expense',
         'description': data['description'] ?? '',
         'value': (data['value'] as num?)?.toDouble() ?? 0,
-        'originalValue':
-            data.containsKey('originalValue')
-                ? (data['originalValue'] as num).toDouble()
-                : (data['value'] as num?)?.toDouble() ?? 0,
+        'originalValue': data.containsKey('originalValue')
+            ? (data['originalValue'] as num).toDouble()
+            : (data['value'] as num?)?.toDouble() ?? 0,
         'currency': data['currency'] ?? 'BRL',
         'category': data['category'] ?? '',
         'date': data['date'] as Timestamp?,
@@ -309,16 +260,17 @@ class Dashboard extends StatelessWidget {
         else
           Card(
             elevation: 2,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Column(
               children: recent.map((transaction) {
                 final isEarning = transaction['type'] == 'earning';
                 final date = (transaction['date'] as Timestamp?)?.toDate();
-                final currencyCode =
-                    (transaction['currency'] as String).split(' ').first;
-                final originalValue =
-                    transaction['originalValue'] as double;
+                final currencyCode = (transaction['currency'] as String)
+                    .split(' ')
+                    .first;
+                final originalValue = transaction['originalValue'] as double;
 
                 return ListTile(
                   leading: Icon(
@@ -338,6 +290,7 @@ class Dashboard extends StatelessWidget {
                     '${isEarning ? '+' : '-'} $currencyCode ${originalValue.toStringAsFixed(2).replaceAll('.', ',')}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
+                      fontSize: 16,
                       color: isEarning ? Colors.green[700] : Colors.red[700],
                     ),
                   ),

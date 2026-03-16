@@ -219,7 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '$_displayCurrency ${displayBalance.toStringAsFixed(2)}',
+                    '$_displayCurrency ${displayBalance.toStringAsFixed(2).replaceAll('.', ',')}',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

@@ -149,7 +149,6 @@ class _ExpenseState extends State<Expense> {
       description.text = currentDescription;
       value.text = originalValue.toStringAsFixed(2);
       category = currentCategory;
-      date = currentDate;
       currency = currentCurrency;
       categorydropdownKey = UniqueKey();
       currencyDropdownKey = UniqueKey();
