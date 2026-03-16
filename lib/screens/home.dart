@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:controle_financeiro/screens/dashboard.dart';
 import 'package:controle_financeiro/screens/new_earning.dart';
 import 'package:controle_financeiro/screens/new_expense.dart';
+import 'package:controle_financeiro/screens/login.dart';
 import 'package:controle_financeiro/services/currency_service.dart';
 import 'package:flutter/material.dart';
 import 'dart:developer';
@@ -68,6 +69,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildBalanceInAppBar(),
                 SizedBox(width: 16),
                 _buildCurrencyDropdown(),
+                SizedBox(width: 8),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LoginScreen(),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.person, color: Colors.white),
+                  tooltip: 'Login / Registro',
+                ),
               ],
             ),
           ],

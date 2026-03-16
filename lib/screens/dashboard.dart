@@ -53,9 +53,9 @@ class Dashboard extends StatelessWidget {
                 children: [
                   _buildSummaryCards(totalEarnings, totalExpenses),
                   SizedBox(height: 24),
-                  _buildCurrencyQuotes(context),
-                  SizedBox(height: 24),
                   _buildRecentTransactions(earningsDocs, expensesDocs),
+                  SizedBox(height: 24),
+                  _buildCurrencyQuotes(context),
                 ],
               ),
             );
@@ -66,68 +66,86 @@ class Dashboard extends StatelessWidget {
   }
 
   Widget _buildSummaryCards(double totalEarnings, double totalExpenses) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Icon(Icons.arrow_upward, color: Colors.green[700], size: 28),
-                  SizedBox(height: 8),
-                  Text(
-                    'Ganhos',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'R\$ ${totalEarnings.toStringAsFixed(2).replaceAll('.', ',')}',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green[700],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        Text(
+          'Resumo de Transações',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
-        SizedBox(width: 12),
-        Expanded(
-          child: Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Icon(Icons.arrow_downward, color: Colors.red[700], size: 28),
-                  SizedBox(height: 8),
-                  Text(
-                    'Despesas',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+        SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.arrow_upward,
+                        color: Colors.green[700],
+                        size: 28,
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Ganhos',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'R\$ ${totalEarnings.toStringAsFixed(2).replaceAll('.', ',')}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 4),
-                  Text(
-                    'R\$ ${totalExpenses.toStringAsFixed(2).replaceAll('.', ',')}',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red[700],
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.arrow_downward,
+                        color: Colors.red[700],
+                        size: 28,
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Despesas',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'R\$ ${totalExpenses.toStringAsFixed(2).replaceAll('.', ',')}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
