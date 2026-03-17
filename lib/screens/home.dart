@@ -93,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         },
         items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Início'),
           BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Ganhos'),
           BottomNavigationBarItem(
             icon: Icon(Icons.attach_money),
@@ -110,9 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => LoginScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => LoginScreen()),
           );
         },
         icon: Icon(Icons.person, color: Colors.white),
@@ -139,10 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
-            PopupMenuItem<String>(
-              value: 'logout',
-              child: Text('Sair'),
-            ),
+            PopupMenuItem<String>(value: 'logout', child: Text('Sair')),
           ];
         },
         icon: Icon(Icons.person, color: Colors.white),
@@ -154,9 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return DropdownButton<String>(
       value: _displayCurrency,
       dropdownColor: Colors.green,
-      style: TextStyle(
-        color: Colors.white,
-      ),
+      style: TextStyle(color: Colors.white),
       icon: Icon(Icons.arrow_drop_down, color: Colors.white),
       underline: Container(),
       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -165,7 +158,9 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() {
             _displayCurrency = newValue;
             _pages[0] = Dashboard(
-                displayCurrency: _displayCurrency, symbolToCode: _symbolToCode);
+              displayCurrency: _displayCurrency,
+              symbolToCode: _symbolToCode,
+            );
           });
         }
       },
@@ -244,25 +239,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
             final totalEarnings = (earningsSnapshot.data?.docs ?? [])
                 .fold<double>(0, (sum, doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              log('Earning doc: ${doc.data()}');
-              final value = data['value'];
-              if (value != null && value is num) {
-                return sum + value.toDouble();
-              }
-              return sum;
-            });
+                  final data = doc.data() as Map<String, dynamic>;
+                  log('Earning doc: ${doc.data()}');
+                  final value = data['value'];
+                  if (value != null && value is num) {
+                    return sum + value.toDouble();
+                  }
+                  return sum;
+                });
 
             final totalExpenses = (expensesSnapshot.data?.docs ?? [])
                 .fold<double>(0, (sum, doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              log('Expense doc: ${doc.data()}');
-              final value = data['value'];
-              if (value != null && value is num) {
-                return sum + value.toDouble();
-              }
-              return sum;
-            });
+                  final data = doc.data() as Map<String, dynamic>;
+                  log('Expense doc: ${doc.data()}');
+                  final value = data['value'];
+                  if (value != null && value is num) {
+                    return sum + value.toDouble();
+                  }
+                  return sum;
+                });
 
             final balance = totalEarnings - totalExpenses;
 
@@ -278,8 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 final displayBalance = snapshot.data ?? balance;
 
                 return Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: displayBalance >= 0
                         ? Colors.green[700]
