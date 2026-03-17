@@ -74,10 +74,11 @@ class _LoginScreenState extends State<LoginScreen> {
               controller: _emailController,
               decoration: InputDecoration(
                 labelText: 'Email',
-                prefixIcon: Icon(Icons.email),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.green),
                 ),
+                floatingLabelStyle: TextStyle(color: Colors.green),
               ),
               keyboardType: TextInputType.emailAddress,
             ),
@@ -86,10 +87,11 @@ class _LoginScreenState extends State<LoginScreen> {
               controller: _passwordController,
               decoration: InputDecoration(
                 labelText: 'Senha',
-                prefixIcon: Icon(Icons.lock),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.green),
                 ),
+                floatingLabelStyle: TextStyle(color: Colors.green),
               ),
               obscureText: true,
             ),
@@ -98,17 +100,15 @@ class _LoginScreenState extends State<LoginScreen> {
               width: double.infinity,
               child: _isLoading
                   ? Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
+                  : FilledButton.icon(
                       onPressed: _login,
-                      style: ElevatedButton.styleFrom(
+                      icon: Icon(Icons.login),
+                      label: Text('Entrar', style: TextStyle(fontSize: 16)),
+                      style: FilledButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        padding: EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: Text('Entrar', style: TextStyle(fontSize: 16)),
                     ),
             ),
             SizedBox(height: 16),
@@ -130,7 +130,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(
                       color: Colors.green,
                       fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.underline,
                     ),
                   ),
                 ),

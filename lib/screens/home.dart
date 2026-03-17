@@ -135,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
               value: 'user_info',
               enabled: false,
               child: Text(
-                _user!.email ?? 'Usuário',
+                'Logado como: ${_user!.email ?? 'Usuário'}',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),

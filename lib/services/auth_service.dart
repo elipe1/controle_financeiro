@@ -13,15 +13,15 @@ class AuthService {
         email: email,
         password: password,
       );
-      
+
       // Create a new user document in Firestore
       await createUserInFirestore(userCredential.user, email);
 
       return null;
     } on FirebaseAuthException catch (e) {
-      return e.message;
+      return _translateAuthError(e);
     } catch (e) {
-      return e.toString();
+      return 'Ocorreu um erro inesperado. Tente novamente.';
     }
   }
 
@@ -49,9 +49,36 @@ class AuthService {
       );
       return null;
     } on FirebaseAuthException catch (e) {
-      return e.message;
+      return _translateAuthError(e);
     } catch (e) {
-      return e.toString();
+      return 'Ocorreu um erro inesperado. Tente novamente.';
+    }
+  }
+
+  String _translateAuthError(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'invalid-email':
+        return 'E-mail inválido.';
+      case 'user-disabled':
+        return 'Este usuário foi desativado.';
+      case 'user-not-found':
+        return 'Usuário não encontrado.';
+      case 'wrong-password':
+        return 'Senha incorreta.';
+      case 'invalid-credential':
+        return 'E-mail ou senha inválidos.';
+      case 'email-already-in-use':
+        return 'Este e-mail já está em uso.';
+      case 'weak-password':
+        return 'A senha é muito fraca.';
+      case 'operation-not-allowed':
+        return 'Operação não permitida.';
+      case 'too-many-requests':
+        return 'Muitas tentativas. Tente novamente mais tarde.';
+      case 'network-request-failed':
+        return 'Falha de conexao. Verifique sua internet.';
+      default:
+        return 'Erro de autenticacao. Tente novamente.';
     }
   }
 
