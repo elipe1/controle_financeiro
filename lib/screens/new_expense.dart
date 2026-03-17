@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:controle_financeiro/expense_category.dart';
 import 'package:controle_financeiro/currency.dart';
 import 'package:controle_financeiro/services/currency_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -22,15 +23,23 @@ class _ExpenseState extends State<Expense> {
   Key currencyDropdownKey = UniqueKey();
   String? _editingExpenseId;
   late final Stream<QuerySnapshot> _expensesStream;
+  String? userId;
 
   @override
   void initState() {
     super.initState();
-    _expensesStream = FirebaseFirestore.instance
-        .collection('expenses')
-        .orderBy('date', descending: true)
-        .limit(10)
-        .snapshots();
+    userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      _expensesStream = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('expenses')
+          .orderBy('date', descending: true)
+          .limit(10)
+          .snapshots();
+    } else {
+      _expensesStream = Stream.empty();
+    }
   }
 
   void _clearFields() {
@@ -46,7 +55,22 @@ class _ExpenseState extends State<Expense> {
     });
   }
 
+  CollectionReference get _expensesCollection => FirebaseFirestore.instance
+      .collection('users')
+      .doc(userId)
+      .collection('expenses');
+
   Future<void> _saveExpense() async {
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro: Usuário não está logado.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     if (description.text.isEmpty ||
         value.text.isEmpty ||
         date == null ||
@@ -86,7 +110,7 @@ class _ExpenseState extends State<Expense> {
       };
 
       if (_editingExpenseId == null) {
-        await FirebaseFirestore.instance.collection('expenses').add({
+        await _expensesCollection.add({
           ...expenseData,
           'createdAt': FieldValue.serverTimestamp(),
         });
@@ -100,13 +124,10 @@ class _ExpenseState extends State<Expense> {
           );
         }
       } else {
-        await FirebaseFirestore.instance
-            .collection('expenses')
-            .doc(_editingExpenseId)
-            .update({
-              ...expenseData,
-              'updatedAt': FieldValue.serverTimestamp(),
-            });
+        await _expensesCollection.doc(_editingExpenseId).update({
+          ...expenseData,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -551,8 +572,9 @@ class _ExpenseState extends State<Expense> {
   }
 
   Future<void> _deleteExpense(String id) async {
+    if (userId == null) return;
     try {
-      await FirebaseFirestore.instance.collection('expenses').doc(id).delete();
+      await _expensesCollection.doc(id).delete();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:controle_financeiro/services/currency_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class Dashboard extends StatelessWidget {
+class Dashboard extends StatefulWidget {
   final String displayCurrency;
   final Map<String, String> symbolToCode;
 
@@ -13,12 +14,37 @@ class Dashboard extends StatelessWidget {
   });
 
   @override
+  State<Dashboard> createState() => _DashboardState();
+}
+
+class _DashboardState extends State<Dashboard> {
+  String? userId;
+
+  @override
+  void initState() {
+    super.initState();
+    userId = FirebaseAuth.instance.currentUser?.uid;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (userId == null) {
+      return Center(child: Text("Usuário não logado."));
+    }
+
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('earnings').snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('earnings')
+          .snapshots(),
       builder: (context, earningsSnapshot) {
         return StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection('expenses').snapshots(),
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .collection('expenses')
+              .snapshots(),
           builder: (context, expensesSnapshot) {
             if (earningsSnapshot.connectionState == ConnectionState.waiting ||
                 expensesSnapshot.connectionState == ConnectionState.waiting) {

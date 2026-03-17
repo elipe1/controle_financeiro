@@ -3,7 +3,9 @@ import 'package:controle_financeiro/screens/dashboard.dart';
 import 'package:controle_financeiro/screens/new_earning.dart';
 import 'package:controle_financeiro/screens/new_expense.dart';
 import 'package:controle_financeiro/screens/login.dart';
+import 'package:controle_financeiro/services/auth_service.dart';
 import 'package:controle_financeiro/services/currency_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'dart:developer';
 
@@ -17,18 +19,22 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   String _displayCurrency = 'R\$';
+  final AuthService _authService = AuthService();
+  User? _user;
 
   late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
+    _user = FirebaseAuth.instance.currentUser;
     _pages = [
       Dashboard(displayCurrency: _displayCurrency, symbolToCode: _symbolToCode),
       Earning(),
       Expense(),
     ];
   }
+
   final List<String> _currencies = ['R\$', 'US\$', '€', '£', '¥'];
 
   final Map<String, String> _currencyNames = {
@@ -70,18 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 SizedBox(width: 16),
                 _buildCurrencyDropdown(),
                 SizedBox(width: 8),
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => LoginScreen(),
-                      ),
-                    );
-                  },
-                  icon: Icon(Icons.person, color: Colors.white),
-                  tooltip: 'Login / Registro',
-                ),
+                _buildAuthActions(),
               ],
             ),
           ],
@@ -109,13 +104,59 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildAuthActions() {
+    if (_user == null) {
+      return IconButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LoginScreen(),
+            ),
+          );
+        },
+        icon: Icon(Icons.person, color: Colors.white),
+        tooltip: 'Login / Registro',
+      );
+    } else {
+      return PopupMenuButton<String>(
+        onSelected: (value) async {
+          if (value == 'logout') {
+            await _authService.signOut();
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => LoginScreen()),
+              (Route<dynamic> route) => false,
+            );
+          }
+        },
+        itemBuilder: (BuildContext context) {
+          return [
+            PopupMenuItem<String>(
+              value: 'user_info',
+              enabled: false,
+              child: Text(
+                _user!.email ?? 'Usuário',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'logout',
+              child: Text('Sair'),
+            ),
+          ];
+        },
+        icon: Icon(Icons.person, color: Colors.white),
+      );
+    }
+  }
+
   Widget _buildCurrencyDropdown() {
     return DropdownButton<String>(
       value: _displayCurrency,
       dropdownColor: Colors.green,
       style: TextStyle(
         color: Colors.white,
-        ),
+      ),
       icon: Icon(Icons.arrow_drop_down, color: Colors.white),
       underline: Container(),
       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -123,7 +164,8 @@ class _HomeScreenState extends State<HomeScreen> {
         if (newValue != null) {
           setState(() {
             _displayCurrency = newValue;
-            _pages[0] = Dashboard(displayCurrency: _displayCurrency, symbolToCode: _symbolToCode);
+            _pages[0] = Dashboard(
+                displayCurrency: _displayCurrency, symbolToCode: _symbolToCode);
           });
         }
       },
@@ -156,8 +198,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBalanceInAppBar() {
+    if (_user == null) {
+      return Container(); // ou um widget de placeholder
+    }
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('earnings').snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(_user!.uid)
+          .collection('earnings')
+          .snapshots(),
       builder: (context, earningsSnapshot) {
         if (earningsSnapshot.hasError) {
           log(
@@ -166,7 +215,11 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
         return StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection('expenses').snapshots(),
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(_user!.uid)
+              .collection('expenses')
+              .snapshots(),
           builder: (context, expensesSnapshot) {
             if (expensesSnapshot.hasError) {
               log(
@@ -191,25 +244,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
             final totalEarnings = (earningsSnapshot.data?.docs ?? [])
                 .fold<double>(0, (sum, doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  log('Earning doc: ${doc.data()}');
-                  final value = data['value'];
-                  if (value != null && value is num) {
-                    return sum + value.toDouble();
-                  }
-                  return sum;
-                });
+              final data = doc.data() as Map<String, dynamic>;
+              log('Earning doc: ${doc.data()}');
+              final value = data['value'];
+              if (value != null && value is num) {
+                return sum + value.toDouble();
+              }
+              return sum;
+            });
 
             final totalExpenses = (expensesSnapshot.data?.docs ?? [])
                 .fold<double>(0, (sum, doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  log('Expense doc: ${doc.data()}');
-                  final value = data['value'];
-                  if (value != null && value is num) {
-                    return sum + value.toDouble();
-                  }
-                  return sum;
-                });
+              final data = doc.data() as Map<String, dynamic>;
+              log('Expense doc: ${doc.data()}');
+              final value = data['value'];
+              if (value != null && value is num) {
+                return sum + value.toDouble();
+              }
+              return sum;
+            });
 
             final balance = totalEarnings - totalExpenses;
 
@@ -225,7 +278,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 final displayBalance = snapshot.data ?? balance;
 
                 return Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: displayBalance >= 0
                         ? Colors.green[700]

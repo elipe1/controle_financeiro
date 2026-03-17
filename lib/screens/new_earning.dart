@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:controle_financeiro/earning_category.dart';
 import 'package:controle_financeiro/currency.dart';
 import 'package:controle_financeiro/services/currency_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -22,15 +23,23 @@ class _EarningState extends State<Earning> {
   Key currencyDropdownKey = UniqueKey();
   String? _editingEarningId;
   late final Stream<QuerySnapshot> _earningsStream;
+  String? userId;
 
   @override
   void initState() {
     super.initState();
-    _earningsStream = FirebaseFirestore.instance
-        .collection('earnings')
-        .orderBy('date', descending: true)
-        .limit(10)
-        .snapshots();
+    userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      _earningsStream = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('earnings')
+          .orderBy('date', descending: true)
+          .limit(10)
+          .snapshots();
+    } else {
+      _earningsStream = Stream.empty();
+    }
   }
 
   void _clearFields() {
@@ -46,7 +55,22 @@ class _EarningState extends State<Earning> {
     });
   }
 
+  CollectionReference get _earningsCollection => FirebaseFirestore.instance
+      .collection('users')
+      .doc(userId)
+      .collection('earnings');
+
   Future<void> _saveEarning() async {
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro: Usuário não está logado.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     if (description.text.isEmpty ||
         value.text.isEmpty ||
         date == null ||
@@ -86,7 +110,7 @@ class _EarningState extends State<Earning> {
       };
 
       if (_editingEarningId == null) {
-        await FirebaseFirestore.instance.collection('earnings').add({
+        await _earningsCollection.add({
           ...earningData,
           'createdAt': FieldValue.serverTimestamp(),
         });
@@ -100,13 +124,10 @@ class _EarningState extends State<Earning> {
           );
         }
       } else {
-        await FirebaseFirestore.instance
-            .collection('earnings')
-            .doc(_editingEarningId)
-            .update({
-              ...earningData,
-              'updatedAt': FieldValue.serverTimestamp(),
-            });
+        await _earningsCollection.doc(_editingEarningId).update({
+          ...earningData,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -158,6 +179,9 @@ class _EarningState extends State<Earning> {
 
   @override
   Widget build(BuildContext context) {
+    if (userId == null) {
+      return Center(child: Text("Usuário não logado."));
+    }
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.all(24.0),
@@ -578,8 +602,9 @@ class _EarningState extends State<Earning> {
   }
 
   Future<void> _deleteEarning(String id) async {
+    if (userId == null) return;
     try {
-      await FirebaseFirestore.instance.collection('earnings').doc(id).delete();
+      await _earningsCollection.doc(id).delete();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

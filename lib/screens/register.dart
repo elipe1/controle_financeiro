@@ -1,8 +1,70 @@
+import 'package:controle_financeiro/screens/home.dart';
 import 'package:controle_financeiro/screens/login.dart';
+import 'package:controle_financeiro/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _authService = AuthService();
+  bool _isLoading = false;
+
+  void _register() async {
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('As senhas não coincidem!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final errorMessage = await _authService.signUp(
+        _emailController.text,
+        _passwordController.text,
+      );
+
+      if (errorMessage == null) {
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomeScreen(),
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +82,7 @@ class RegisterScreen extends StatelessWidget {
             Icon(Icons.person_add, size: 80, color: Colors.green),
             SizedBox(height: 32),
             TextField(
+              controller: _emailController,
               decoration: InputDecoration(
                 labelText: 'Email',
                 prefixIcon: Icon(Icons.email),
@@ -31,6 +94,7 @@ class RegisterScreen extends StatelessWidget {
             ),
             SizedBox(height: 16),
             TextField(
+              controller: _passwordController,
               decoration: InputDecoration(
                 labelText: 'Senha',
                 prefixIcon: Icon(Icons.lock),
@@ -42,6 +106,7 @@ class RegisterScreen extends StatelessWidget {
             ),
             SizedBox(height: 16),
             TextField(
+              controller: _confirmPasswordController,
               decoration: InputDecoration(
                 labelText: 'Confirmar Senha',
                 prefixIcon: Icon(Icons.lock_outline),
@@ -54,18 +119,21 @@ class RegisterScreen extends StatelessWidget {
             SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text('Registrar', style: TextStyle(fontSize: 16)),
-              ),
+              child: _isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : ElevatedButton(
+                      onPressed: _register,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child:
+                          Text('Registrar', style: TextStyle(fontSize: 16)),
+                    ),
             ),
             SizedBox(height: 16),
             Row(
